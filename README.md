@@ -53,8 +53,7 @@ flowchart TD
 
 The workflow will:
 1. Use Hostile for perform human read scrubbing (if scrub_reads = true)
-2. Use Seqyclean to quality filter and trim the human read scrubbed fastq files (or raw fastq files if scrub_reads = false)
-  - Seqyclean parameters include a minimum read length set to 25 bp and quality trimming set to a minimum Phred quality score of 30.
+2. Use Seqyclean to quality filter and trim the human read scrubbed fastq files (or raw fastq files if scrub_reads = false). Seqyclean parameters include a minimum read length set to 25 bp and quality trimming set to a minimum Phred quality score of 30.
 3. Run FastQC on both the raw and cleaned reads
 4. Align reads to the reference genome using bwa and then sort the bam by coordinates using Samtools
 5. Use iVar trim to trim primer regions and then sort the trimmed bam by coordinates using Samtools
