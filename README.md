@@ -17,7 +17,7 @@ CDPHE_wastewater_qPCR_amplicon_seq_analysis
 
 ## Table of Contents
 
-1. Overview]
+1. Overview
 2. Getting Set Up
 3. qPCR seq analysis workflow
 
