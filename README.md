@@ -40,6 +40,7 @@ The wastewater_qpcr_seq_analysis.wdl workflow accepts paired-end illumina sequen
 
 ### wastewater_qpcr_seq_analysis.wdl overview
 
+```mermaid
 flowchart TD
     A[raw fastq files] --> B[fastqc_raw]
     A --> C[hostile]
@@ -49,6 +50,7 @@ flowchart TD
     F --> G[ivar_trim]
     G --> H[bam_stats]
     H --> I[summarize]
+```
 
 The workflow will:
 1. Use Hostile for perform human read scrubbing (if scrub_reads = true)
