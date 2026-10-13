@@ -85,7 +85,7 @@ workflow wastewater_qpcr_seq_analysis {
             cov_out_10x = bam_stats.cov_out_10x
     }
 
-    call version_capture.workflow_version_capture {
+    call version_capture.workflow_version_capture as workflow_version_capture {
         input:
     }
 
