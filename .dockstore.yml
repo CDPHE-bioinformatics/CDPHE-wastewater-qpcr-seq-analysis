@@ -1,0 +1,5 @@
+version: 1.2
+workflows:
+ - name: wastewater_qpcr_seq_analysis
+   subclass: WDL
+   primaryDescriptorPath: /workflows/wastewater_qpcr_seq_analysis.wdl
