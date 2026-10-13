@@ -2,7 +2,7 @@ version 1.0
 
 # import hostile read scrubbing and version capture
 import "../tasks/hostile_task.wdl" as hostile_task
-import "../tasks/version_capture_task.wdl" as version capture
+import "../tasks/version_capture_task.wdl" as version_capture
 
 workflow wastewater_qpcr_seq_analysis {
 
