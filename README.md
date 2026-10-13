@@ -2,7 +2,7 @@
 
 **Disclaimer: Next generation sequencing and bioinformatic and genomic analysis at CDPHE is not CLIA validated at this time. These workflows and their outputs are not to be used for diagnostic purposes and should only be used for public health action and surveillance purposes. CDPHE is not responsible for the incorrect or inappropriate use of these workflows or their results.**
 
-In this repository you will find all things related to analyzing wastewater sequencing data generated from qPCR amplicon using paired-end Illumina sequencing. The general directory stucture is as follows:
+In this repository you will find workflows and scripts for analyzing wastewater sequencing data generated from qPCR amplicons using paired-end Illumina sequencing. The general directory stucture is as follows:
 
 ```
 CDPHE_wastewater_qPCR_amplicon_seq_analysis
@@ -11,10 +11,9 @@ CDPHE_wastewater_qPCR_amplicon_seq_analysis
 | workflows # terra workflow you can find in dockstore and push to your terra workspace
       | wastewater_qpcr_seq_analysis.wdl
 | tasks # custom python scripts for analysess used in wdl workflows
-      | hostile_task.wdl     
+      | hostile_task.wdl
+      | version_capture.wdl  
 ```
-
-# CDPHE_EV-D68 Workflows
 
 ## Table of Contents
 
