@@ -1,8 +1,7 @@
 version 1.0
 
-# import hostile read scrubbing and version capture
+# import hostile read scrubbing
 import "../tasks/hostile_task.wdl" as hostile_task
-import "../tasks/version_capture_task.wdl" as version_capture
 
 workflow wastewater_qpcr_seq_analysis {
 
@@ -13,7 +12,6 @@ workflow wastewater_qpcr_seq_analysis {
         File    primer_bed
         File    adapters_and_contaminants
         File    ref_genome
-        File    version_capture_py
         Boolean scrub_reads
         Array[File]? scrub_genome_index
         String  project_name
@@ -85,33 +83,6 @@ workflow wastewater_qpcr_seq_analysis {
             cov_out_10x = bam_stats.cov_out_10x
     }
 
-    call version_capture.workflow_version_capture as workflow_version_capture {
-        input:
-    }
-
-    Array[VersionInfo] version_array = [
-        seqyclean.seqyclean_version_info,
-        fastqc_cleaned.fastqc_version_info,
-        align_reads.bwa_version_info,
-        align_reads.samtools_version_info,
-        ivar_trim.ivar_version_info,
-        bam_stats.samtools_version_info
-    ]
-    if (scrub_reads) {
-        Array[VersionInfo] version_array_with_hostile = flatten([version_array, select_all([hostile.hostile_version_info])])
-    }
-
-    call version_capture.task_version_capture as task_version_capture {
-        input:
-            version_array = select_first([version_array_with_hostile, version_array]),
-            workflow_name = "wastewater_qpcr_seq_analysis",
-            workflow_version = workflow_version_capture.workflow_version,
-            project_name = project_name,
-            analysis_date = workflow_version_capture.analysis_date,
-            version_capture_py = version_capture_py
-
-    }
-
     call transfer_outputs {
         input:
             fastq1_scrubbed = hostile.fastq1_scrubbed,
@@ -128,7 +99,6 @@ workflow wastewater_qpcr_seq_analysis {
             cov_out = cov_out,
             cov_out_10x = cov_out_10x,
             summary = summary,
-            version_capture_illumina_pe_assembly = task_version_capture.version_capture_file,
             out_dir = outdirpath
     }
 
@@ -149,7 +119,6 @@ workflow wastewater_qpcr_seq_analysis {
         File cov_out = bam_stats.cov_out
         File cov_out_10x = bam_stats.cov_out_10x
         File summary = summarize.summary
-        File version_capture_illumina_pe_assembly = task_version_capture.version_capture_file
         String transfer_date = transfer_outputs.transfer_date
     }
 }
@@ -167,9 +136,6 @@ task seqyclean {
     command <<<
 
         seqyclean -minlen 25 -qual 30 30 -gz -1 ~{fastq_1} -2 ~{fastq_2} -c ~{contam} -o ~{sample_name}_clean
-        
-        # grab seqyclean version
-        seqyclean -h | awk '/Version/ {print $2}' | tee VERSION
 
     >>>
 
@@ -178,12 +144,6 @@ task seqyclean {
         File cleaned_1 = "${sample_name}_clean_PE1.fastq.gz"
         File cleaned_2 = "${sample_name}_clean_PE2.fastq.gz"
         File seqyclean_summary = "${sample_name}_clean_SummaryStatistics.tsv"
-
-        VersionInfo seqyclean_version_info = object {
-            software: "seqyclean",
-            docker: docker,
-            version: read_string("VERSION")
-        }
 
     }
 
@@ -214,21 +174,12 @@ task fastqc {
 
         fastqc --outdir $PWD ~{fastq_1} ~{fastq_2}
 
-        # grab version
-        fastqc --version | awk '/FastQC/ {print $2}' | tee VERSION
-
     >>>
 
     output {
 
         File fastqc1_html = "${fastq1_name}_fastqc.html"
         File fastqc2_html = "${fastq2_name}_fastqc.html"
-
-        VersionInfo fastqc_version_info = object {
-            software: "fastqc",
-            docker: docker,
-            version: read_string("VERSION")
-        }
 
     }
 
@@ -263,29 +214,12 @@ task align_reads {
         samtools view -u -h -F 4 -o ./~{sample_name}_aln.sorted.bam
         samtools index ./~{sample_name}_aln.sorted.bam
 
-        # echo bwa 0.7.17-r1188 > VERSION
-        # grab version bwa and samtools versions
-        bwa 2>&1 | awk '/Version/{print $2}' | tee VERSION_bwa
-        samtools --version | awk '/samtools/ {print $2}' |tee VERSION_samtools
-
     >>>
 
     output {
 
         File out_bam = "${sample_name}_aln.sorted.bam"
         File out_bamindex = "${sample_name}_aln.sorted.bam.bai"
-
-        VersionInfo bwa_version_info = object {
-            software: "bwa",
-            docker: docker,
-            version: read_string("VERSION_bwa")
-        }
-
-        VersionInfo samtools_version_info = object {
-            software: "samtools",
-            docker: docker,
-            version: read_string("VERSION_samtools")
-        }
 
     }
 
@@ -317,10 +251,6 @@ task ivar_trim {
         samtools sort ~{sample_name}_trim.bam -o ~{sample_name}_trim.sort.bam
         samtools index ~{sample_name}_trim.sort.bam
 
-        # grab ivar and samtools versions
-        ivar version | awk '/version/ {print $3}' | tee VERSION_ivar
-        samtools --version | awk '/samtools/ {print $2}' | tee VERSION_samtools
-
     >>>
 
     output {
@@ -328,18 +258,6 @@ task ivar_trim {
         File trim_bam = "${sample_name}_trim.bam"
         File trimsort_bam = "${sample_name}_trim.sort.bam"
         File trimsort_bamindex = "${sample_name}_trim.sort.bam.bai"
-
-        VersionInfo ivar_version_info = object {
-            software: "ivar",
-            docker: docker,
-            version: read_string("VERSION_ivar")
-        }
-
-        VersionInfo samtools_version_info = object {
-            software: "samtools",
-            docker: docker,
-            version: read_string ("VERSION_samtools")
-        }
 
     }
 
@@ -371,21 +289,12 @@ task bam_stats {
         samtools coverage -r ~{qpcr_region} -o ~{sample_name}_coverage.txt ~{bam}
         samtools coverage --min-depth 10 -r ~{qpcr_region} -o ~{sample_name}_coverage_10x.txt ~{bam}
 
-        # grab version
-        samtools --version | awk '/samtools/ {print $2}' | tee VERSION
-
     >>>
 
     output {
 
         File cov_out  = "${sample_name}_coverage.txt"
         File cov_out_10x  = "${sample_name}_coverage_10x.txt"
-
-        VersionInfo samtools_version_info = object {
-            software: "samtools",
-            docker: docker,
-            version: read_string("VERSION")
-        }
 
     }
 
@@ -455,7 +364,6 @@ task transfer_outputs {
         File cov_out
         File cov_out_10x
         File summary
-        File version_capture_wastewater_qpcr_seq_analysis
     }
 
     String out_dir_path = sub('${out_dir}', "/$", "")
@@ -476,7 +384,6 @@ task transfer_outputs {
         gsutil -m cp ~{cov_out} ~{out_dir_path}/bam_stats/
         gsutil -m cp ~{cov_out_10x} ~{out_dir_path}/bam_stats/
         gsutil -m cp ~{cov_out_10x} ~{out_dir_path}/summary/
-        gsutil -m cp ~{version_capture_wastewater_qpcr_seq_analysis} ~{out_dir_path}/summary_results/
 
         transferdate=`date`
         echo $transferdate | tee TRANSFERDATE
