@@ -383,7 +383,7 @@ task transfer_outputs {
         gsutil -m cp ~{trimsort_bamindex} ~{out_dir_path}/alignments/
         gsutil -m cp ~{cov_out} ~{out_dir_path}/bam_stats/
         gsutil -m cp ~{cov_out_10x} ~{out_dir_path}/bam_stats/
-        gsutil -m cp ~{cov_out_10x} ~{out_dir_path}/summary/
+        gsutil -m cp ~{summary} ~{out_dir_path}/summary/
 
         transferdate=`date`
         echo $transferdate | tee TRANSFERDATE
